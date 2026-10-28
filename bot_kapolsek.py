@@ -92,22 +92,17 @@ def hapus_kotak_saran_jika_ada(page):
     except Exception:
         pass
 
-def buka_tab_dan_kegiatan(page, nama_tab, nama_giat):
-    # Pastikan tab Quick Wins terbuka
-    tab = page.locator("button, div").filter(has_text=nama_tab)
-    if tab.count() > 0:
-        tab.last.click()
-        page.wait_for_timeout(1500)
+def buka_tab_dan_kegiatan(page, teks_tab, nama_giat):
+    """Membuka tab di bagian '2. PILIH QUICK WINS DAN KEGIATAN' lalu memilih sub-kegiatan."""
+    # Klik langsung teks unik pada tombol tab ("Polres Kuat, Polsek Tangguh" atau "Ruang Publik Aman")
+    page.get_by_text(teks_tab).first.click()
+    page.wait_for_timeout(2000)
 
-    # Jika menu kegiatan belum muncul, klik tombol "Isi laporan" pertama
-    if page.get_by_text(nama_giat).count() == 0:
-        if page.get_by_role("button", name="Isi laporan").count() > 0:
-            page.get_by_role("button", name="Isi laporan").first.click()
-            page.wait_for_timeout(1500)
-
+    # Klik nama sub-kegiatan
     page.get_by_text(nama_giat).first.click()
     page.wait_for_timeout(2000)
 
+    # Pastikan tombol Pelaksana = Kapolsek terpilih & isi Nama pejabat pelaksana
     tombol_kapolsek = page.get_by_role("button", name="Kapolsek", exact=True)
     if tombol_kapolsek.count() > 0:
         tombol_kapolsek.first.click()
@@ -119,6 +114,12 @@ def isi_lokasi_dan_koordinat(page, label_lokasi, nama_lokasi, titik_koordinat):
     input_koord = page.locator("input[placeholder*='koordinat'], input[placeholder*='-'], input[placeholder*='Maps']")
     if input_koord.count() > 0:
         input_koord.first.fill(titik_koordinat)
+    else:
+        semua_text = page.locator("input[type='text']:visible, input:not([type]):visible")
+        for i in range(semua_text.count()):
+            if semua_text.nth(i).input_value() == nama_lokasi and i + 1 < semua_text.count():
+                semua_text.nth(i + 1).fill(titik_koordinat)
+                break
 
 def kirim_dan_screenshot(page, kode, nama_giat, link_foto, no_foto, tot_foto):
     hapus_kotak_saran_jika_ada(page)
@@ -195,7 +196,7 @@ def jalankan_robot_kapolsek():
             # A. INPUT HARIAN: QW7.1 s/d QW7.4
             # ==========================================================
             # --- 1. QW7.1 Satu desa satu Bhabinkamtibmas ---
-            buka_tab_dan_kegiatan(page, "QW7 Polres Kuat, Polsek Tangguh", "Satu desa satu Bhabinkamtibmas")
+            buka_tab_dan_kegiatan(page, "Polres Kuat, Polsek Tangguh", "Satu desa satu Bhabinkamtibmas")
             num_inputs = page.locator("input[type='number']")
             if num_inputs.count() >= 2:
                 num_inputs.nth(0).fill("17")
@@ -208,7 +209,7 @@ def jalankan_robot_kapolsek():
             kirim_dan_screenshot(page, "QW7.1", "Satu desa satu Bhabinkamtibmas", link, no, tot)
 
             # --- 2. QW7.2 Penataan personel ---
-            buka_tab_dan_kegiatan(page, "QW7 Polres Kuat, Polsek Tangguh", "Penataan personel")
+            buka_tab_dan_kegiatan(page, "Polres Kuat, Polsek Tangguh", "Penataan personel")
             num_inputs = page.locator("input[type='number']")
             if num_inputs.count() >= 1:
                 num_inputs.nth(0).fill("4")
@@ -216,7 +217,7 @@ def jalankan_robot_kapolsek():
             kirim_dan_screenshot(page, "QW7.2", "Penataan personel", link, no, tot)
 
             # --- 3. QW7.3 Polsek siaga 24 jam ---
-            buka_tab_dan_kegiatan(page, "QW7 Polres Kuat, Polsek Tangguh", "Polsek siaga 24 jam")
+            buka_tab_dan_kegiatan(page, "Polres Kuat, Polsek Tangguh", "Polsek siaga 24 jam")
             num_inputs = page.locator("input[type='number']")
             if num_inputs.count() >= 2:
                 num_inputs.nth(0).fill("0")
@@ -228,7 +229,7 @@ def jalankan_robot_kapolsek():
             kirim_dan_screenshot(page, "QW7.3", "Polsek siaga 24 jam", link, no, tot)
 
             # --- 4. QW7.4 Perkara ringan dan rembuk warga ---
-            buka_tab_dan_kegiatan(page, "QW7 Polres Kuat, Polsek Tangguh", "Perkara ringan dan rembuk warga")
+            buka_tab_dan_kegiatan(page, "Polres Kuat, Polsek Tangguh", "Perkara ringan dan rembuk warga")
             num_inputs = page.locator("input[type='number']")
             if num_inputs.count() >= 2:
                 num_inputs.nth(0).fill("0")
@@ -240,7 +241,7 @@ def jalankan_robot_kapolsek():
             # B. INPUT MINGGUAN SESUAI HARI
             # ==========================================================
             if hari_ke == 0:
-                buka_tab_dan_kegiatan(page, "QW1 Ruang Publik Aman", "Gatur pagi (pengaturan lalu lintas Senin pagi)")
+                buka_tab_dan_kegiatan(page, "Ruang Publik Aman", "Gatur pagi (pengaturan lalu lintas Senin pagi)")
                 isi_lokasi_dan_koordinat(page, "Nama lokasi dan titik koordinat", "SIMPANG 4 PASAR JATISRONO", "(-7.8273967, 111.1285832)")
                 page.get_by_label("Pertimbangan pilihan lokasi").select_option(label="Rawan keramaian")
                 page.get_by_label("Cara bertindak di lokasi").select_option(label="Gatur")
@@ -249,7 +250,7 @@ def jalankan_robot_kapolsek():
                 kirim_dan_screenshot(page, "QW1.1", "Gatur pagi (pengaturan lalu lintas Senin pagi)", link, no, tot)
 
             elif hari_ke == 4:
-                buka_tab_dan_kegiatan(page, "QW1 Ruang Publik Aman", "Jumat keliling (Jumling)")
+                buka_tab_dan_kegiatan(page, "Ruang Publik Aman", "Jumat keliling (Jumling)")
                 isi_lokasi_dan_koordinat(page, "Nama masjid dan titik koordinat", "MASJID NURUL HUDA", "(-7.8260946, 111.1280397)")
                 page.get_by_label("Pertimbangan pilihan lokasi").fill("Masjid besar di jatirono")
                 page.get_by_label("Peran").select_option(label="Jamaah")
@@ -257,7 +258,7 @@ def jalankan_robot_kapolsek():
                 kirim_dan_screenshot(page, "QW1.6", "Jumat keliling (Jumling)", link, no, tot)
 
             elif hari_ke == 5:
-                buka_tab_dan_kegiatan(page, "QW1 Ruang Publik Aman", "Subuh keliling (Suling)")
+                buka_tab_dan_kegiatan(page, "Ruang Publik Aman", "Subuh keliling (Suling)")
                 isi_lokasi_dan_koordinat(page, "Nama masjid dan titik koordinat", "MASJID NURUL HUDA", "(-7.8261218, 111.1280397)")
                 page.get_by_label("Pertimbangan pilihan lokasi").fill("MASJID BESAR DI JATISRONO")
                 page.get_by_label("Peran").select_option(label="Jamaah")
@@ -265,7 +266,7 @@ def jalankan_robot_kapolsek():
                 kirim_dan_screenshot(page, "QW1.7", "Subuh keliling (Suling)", link, no, tot)
 
             elif hari_ke == 6:
-                buka_tab_dan_kegiatan(page, "QW1 Ruang Publik Aman", "Minggu kasih")
+                buka_tab_dan_kegiatan(page, "Ruang Publik Aman", "Minggu kasih")
                 isi_lokasi_dan_koordinat(page, "Nama tempat ibadah dan titik koordinat", "GEREJA SANTA MARIA JATISRONO", "(-7.8253420, 111.1305288)")
                 page.get_by_label("Pertimbangan pilihan lokasi").fill("Gereja besar di jatisrono")
                 page.get_by_label("Peran").fill("PENGAMANAN")
