@@ -12,9 +12,6 @@ TG_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "").strip()
 
 NAMA_PELAPOR = "AKP AGUS SUYANTO, S.H., M.H."
 
-# ==========================================================
-# LINK FOLDER GOOGLE DRIVE STOK FOTO DOKUMENTASI
-# ==========================================================
 FOLDER_URLS = {
     # Harian QW7
     "qw7_1": "https://drive.google.com/drive/folders/10cTeMmc067qHy1TtRXnqS6uQYuYeMO84",
@@ -77,8 +74,7 @@ def ambil_foto_drive(key_folder):
 
 def tutup_saran_jika_ada(page):
     try:
-        # Menghapus kotak saran default dengan menekan tanda '×' pada Saran 1
-        btn_close = page.locator("button:has-text('×'), [aria-label='Close'], button.delete-btn").first
+        btn_close = page.locator("button:has-text('×'), [aria-label='Close']").first
         if btn_close.is_visible(timeout=1500):
             btn_close.click()
             page.wait_for_timeout(500)
@@ -86,25 +82,22 @@ def tutup_saran_jika_ada(page):
         pass
 
 def buka_kegiatan_qw1(page, teks_giat):
-    # 1. Pastikan tab QW1 Ruang Publik Aman terpilih
     tab_qw1 = page.locator("button, div").filter(has_text=re.compile(r"QW1\s+Ruang\s+Publik\s+Aman", re.I)).last
     tab_qw1.scroll_into_view_if_needed()
     tab_qw1.click()
     page.wait_for_timeout(2000)
 
-    # 2. Klik kegiatan di daftar bawah
     item_giat = page.locator("div, button").filter(has_text=re.compile(teks_giat, re.I)).last
     item_giat.scroll_into_view_if_needed()
     item_giat.click()
     page.wait_for_timeout(3000)
 
-    # 3. Pastikan pelaksana 'Kapolsek' terpilih dan isi nama pejabat pelaksana
     btn_kapolsek = page.locator("button:has-text('Kapolsek')").first
     if btn_kapolsek.is_visible():
         btn_kapolsek.click()
         page.wait_for_timeout(500)
 
-    input_pejabat = page.locator("input[placeholder*='AKBP Budi Santoso'], input[placeholder*='pejabat pelaksana']").first
+    input_pejabat = page.locator("input[placeholder*='Budi Santoso'], input[placeholder*='Sutrisno'], input[placeholder*='pejabat']").first
     if input_pejabat.is_visible():
         input_pejabat.fill(NAMA_PELAPOR)
         page.wait_for_timeout(500)
@@ -112,13 +105,11 @@ def buka_kegiatan_qw1(page, teks_giat):
 def submit_laporan(page, kode_giat, nama_giat, link_foto, no_foto, tot_foto):
     tutup_saran_jika_ada(page)
     
-    # Isi link Google Drive
     input_drive = page.locator("input[placeholder*='drive.google.com']").first
     input_drive.scroll_into_view_if_needed()
     input_drive.fill(link_foto)
     page.wait_for_timeout(1000)
 
-    # Klik tombol Kirim Laporan
     btn_kirim = page.locator("button:has-text('Kirim laporan')").last
     btn_kirim.scroll_into_view_if_needed()
     btn_kirim.click()
@@ -136,12 +127,15 @@ def submit_laporan(page, kode_giat, nama_giat, link_foto, no_foto, tot_foto):
     )
 
 def isi_qw7_harian(page):
-    # QW7.1 Satu desa satu Bhabinkamtibmas
-    page.locator("button, div").filter(has_text=re.compile(r"QW7\s+Polres\s+Kuat", re.I)).last.click()
-    page.wait_for_timeout(1500)
+    tab_qw7 = page.locator("button, div").filter(has_text=re.compile(r"QW7\s+Polres\s+Kuat", re.I)).last
+    tab_qw7.scroll_into_view_if_needed()
+    tab_qw7.click()
+    page.wait_for_timeout(2000)
+
+    # QW7.1
     page.locator("div, button").filter(has_text=re.compile(r"QW7\.1", re.I)).last.click()
     page.wait_for_timeout(2000)
-    page.locator("input[placeholder*='pejabat pelaksana'], input[placeholder*='AKBP']").first.fill(NAMA_PELAPOR)
+    page.locator("input[placeholder*='Budi Santoso'], input[placeholder*='Sutrisno']").first.fill(NAMA_PELAPOR)
     nums = page.locator("input[type='number']")
     if nums.count() >= 2:
         nums.nth(0).fill("17")
@@ -151,24 +145,24 @@ def isi_qw7_harian(page):
     link, no, tot = ambil_foto_drive("qw7_1")
     submit_laporan(page, "QW7.1", "Satu desa satu Bhabinkamtibmas", link, no, tot)
 
-    # QW7.2 Penataan personel
-    page.locator("button, div").filter(has_text=re.compile(r"QW7\s+Polres\s+Kuat", re.I)).last.click()
+    # QW7.2
+    tab_qw7.click()
     page.wait_for_timeout(1500)
     page.locator("div, button").filter(has_text=re.compile(r"QW7\.2", re.I)).last.click()
     page.wait_for_timeout(2000)
-    page.locator("input[placeholder*='pejabat pelaksana'], input[placeholder*='AKBP']").first.fill(NAMA_PELAPOR)
+    page.locator("input[placeholder*='Budi Santoso'], input[placeholder*='Sutrisno']").first.fill(NAMA_PELAPOR)
     num72 = page.locator("input[type='number']").first
     if num72.is_visible():
         num72.fill("0")
     link, no, tot = ambil_foto_drive("qw7_2")
     submit_laporan(page, "QW7.2", "Penataan personel", link, no, tot)
 
-    # QW7.3 Polsek siaga 24 jam
-    page.locator("button, div").filter(has_text=re.compile(r"QW7\s+Polres\s+Kuat", re.I)).last.click()
+    # QW7.3
+    tab_qw7.click()
     page.wait_for_timeout(1500)
     page.locator("div, button").filter(has_text=re.compile(r"QW7\.3", re.I)).last.click()
     page.wait_for_timeout(2000)
-    page.locator("input[placeholder*='pejabat pelaksana'], input[placeholder*='AKBP']").first.fill(NAMA_PELAPOR)
+    page.locator("input[placeholder*='Budi Santoso'], input[placeholder*='Sutrisno']").first.fill(NAMA_PELAPOR)
     nums73 = page.locator("input[type='number']")
     if nums73.count() >= 2:
         nums73.nth(0).fill("0")
@@ -177,12 +171,12 @@ def isi_qw7_harian(page):
     link, no, tot = ambil_foto_drive("qw7_3")
     submit_laporan(page, "QW7.3", "Polsek siaga 24 jam", link, no, tot)
 
-    # QW7.4 Perkara ringan dan rembuk warga
-    page.locator("button, div").filter(has_text=re.compile(r"QW7\s+Polres\s+Kuat", re.I)).last.click()
+    # QW7.4
+    tab_qw7.click()
     page.wait_for_timeout(1500)
     page.locator("div, button").filter(has_text=re.compile(r"QW7\.4", re.I)).last.click()
     page.wait_for_timeout(2000)
-    page.locator("input[placeholder*='pejabat pelaksana'], input[placeholder*='AKBP']").first.fill(NAMA_PELAPOR)
+    page.locator("input[placeholder*='Budi Santoso'], input[placeholder*='Sutrisno']").first.fill(NAMA_PELAPOR)
     nums74 = page.locator("input[type='number']")
     if nums74.count() >= 2:
         nums74.nth(0).fill("0")
@@ -213,17 +207,18 @@ def jalankan_robot_kapolsek():
                 page.get_by_role("button", name="Masuk").click()
                 page.wait_for_timeout(5000)
 
-            # Pilih Jabatan Kapolsek / Wakapolsek
-            page.locator("input[placeholder*='Nama dan pangkat pelapor']").fill(NAMA_PELAPOR)
+            # Selector identitas pelapor yang akurat
+            input_nama_pelapor = page.locator("input[placeholder*='Sutrisno']").first
+            if not input_nama_pelapor.is_visible():
+                input_nama_pelapor = page.get_by_label("Nama dan pangkat pelapor").first
+            input_nama_pelapor.fill(NAMA_PELAPOR)
+
             page.locator("select").first.select_option(label="Kapolsek/Wakapolsek (12 kegiatan)")
             page.wait_for_timeout(2000)
 
-            # ----------------------------------------------------
             # 1. JALANKAN KEGIATAN MINGGUAN QW1 SESUAI HARI
-            # ----------------------------------------------------
             # SENIN: QW1.1 & QW1.2
             if hari_ke == 0:
-                # QW1.1 Gatur Pagi
                 buka_kegiatan_qw1(page, "QW1.1")
                 in_loc = page.locator("xpath=//*[contains(text(), 'Nama lokasi')]/following::input")
                 in_loc.nth(0).fill("SIMPANG 4 PASAR JATISRONO")
@@ -234,7 +229,6 @@ def jalankan_robot_kapolsek():
                 link, no, tot = ambil_foto_drive("qw1_1")
                 submit_laporan(page, "QW1.1", "Gatur pagi", link, no, tot)
 
-                # QW1.2 Polisi Peduli Pendidikan (Polidik)
                 buka_kegiatan_qw1(page, "QW1.2")
                 in_sek = page.locator("xpath=//*[contains(text(), 'Nama sekolah')]/following::input")
                 in_sek.nth(0).fill("SMP NEGERI 1 JATISRONO")
@@ -245,7 +239,7 @@ def jalankan_robot_kapolsek():
                 link, no, tot = ambil_foto_drive("qw1_2")
                 submit_laporan(page, "QW1.2", "Polisi peduli pendidikan", link, no, tot)
 
-            # RABU: QW1.4 Kumpul Bersama Masyarakat
+            # RABU: QW1.4
             elif hari_ke == 2:
                 buka_kegiatan_qw1(page, "QW1.4")
                 in_km = page.locator("xpath=//*[contains(text(), 'Nama lokasi kumpul')]/following::input")
@@ -256,7 +250,7 @@ def jalankan_robot_kapolsek():
                 link, no, tot = ambil_foto_drive("qw1_4")
                 submit_laporan(page, "QW1.4", "Kumpul bersama masyarakat", link, no, tot)
 
-            # KAMIS: QW1.3 Polisi Peduli Pengangguran (Poliran)
+            # KAMIS: QW1.3
             elif hari_ke == 3:
                 buka_kegiatan_qw1(page, "QW1.3")
                 page.locator("button:has-text('Merekrut')").first.click()
@@ -267,7 +261,6 @@ def jalankan_robot_kapolsek():
 
             # JUMAT: QW1.5 & QW1.6
             elif hari_ke == 4:
-                # QW1.5 Green Policing
                 buka_kegiatan_qw1(page, "QW1.5")
                 in_gp = page.locator("xpath=//*[contains(text(), 'Nama lokasi')]/following::input")
                 in_gp.nth(0).fill("LINGKUNGAN MAPOLSEK JATISRONO")
@@ -278,7 +271,6 @@ def jalankan_robot_kapolsek():
                 link, no, tot = ambil_foto_drive("qw1_5")
                 submit_laporan(page, "QW1.5", "Green policing", link, no, tot)
 
-                # QW1.6 Jumat Keliling (Jumling)
                 buka_kegiatan_qw1(page, "QW1.6")
                 in_jm = page.locator("xpath=//*[contains(text(), 'Nama masjid')]/following::input")
                 in_jm.nth(0).fill("MASJID NURUL HUDA")
@@ -288,7 +280,7 @@ def jalankan_robot_kapolsek():
                 link, no, tot = ambil_foto_drive("qw1_6")
                 submit_laporan(page, "QW1.6", "Jumat keliling (Jumling)", link, no, tot)
 
-            # SABTU: QW1.7 Subuh Keliling (Suling)
+            # SABTU: QW1.7
             elif hari_ke == 5:
                 buka_kegiatan_qw1(page, "QW1.7")
                 in_sl = page.locator("xpath=//*[contains(text(), 'Nama masjid')]/following::input")
@@ -299,7 +291,7 @@ def jalankan_robot_kapolsek():
                 link, no, tot = ambil_foto_drive("qw1_7")
                 submit_laporan(page, "QW1.7", "Subuh keliling (Suling)", link, no, tot)
 
-            # MINGGU: QW1.8 Minggu Kasih
+            # MINGGU: QW1.8
             elif hari_ke == 6:
                 buka_kegiatan_qw1(page, "QW1.8")
                 in_mk = page.locator("xpath=//*[contains(text(), 'Nama tempat ibadah')]/following::input")
@@ -310,9 +302,7 @@ def jalankan_robot_kapolsek():
                 link, no, tot = ambil_foto_drive("qw1_8")
                 submit_laporan(page, "QW1.8", "Minggu kasih", link, no, tot)
 
-            # ----------------------------------------------------
             # 2. JALANKAN 4 KEGIATAN HARIAN QW7 (SETIAP HARI)
-            # ----------------------------------------------------
             isi_qw7_harian(page)
 
         except Exception as e:
