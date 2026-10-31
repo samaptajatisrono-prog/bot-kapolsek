@@ -1,5 +1,6 @@
 import os
 import re
+import random
 from datetime import datetime, date, timedelta, timezone
 import requests
 from playwright.sync_api import sync_playwright
@@ -14,15 +15,15 @@ NAMA_KAPOLSEK = "AKP AGUS SUYANTO, S.H., M.H."
 TANGGAL_PATOKAN = date(2026, 10, 29)
 
 # ==========================================================
-# LINK FOLDER GOOGLE DRIVE DOKUMENTASI
+# LINK FOLDER GOOGLE DRIVE DOKUMENTASI LENGKAP RESMI
 # ==========================================================
 FOLDER_URLS = {
     # Mingguan QW1 (Ruang Publik Aman)
     "qw1_1": "https://drive.google.com/drive/folders/1XX38ZQyxI0sDaMXJWivwOyE9qnefWYFa",
-    "qw1_2": "https://drive.google.com/drive/folders/10cTeMmc067qHy1TtRXnqS6uQYuYeMO84",
-    "qw1_3": "https://drive.google.com/drive/folders/1X-MEjPb1g7uxksdtKyrTQlpui2eCtFMJ",
-    "qw1_4": "https://drive.google.com/drive/folders/1RDdRwoFQT_6sM_fuI6lxaHI8HyatKT48",
-    "qw1_5": "https://drive.google.com/drive/folders/1VIZ6BCtiGMWIHs7qsT_dr03cUsr3NKJ9",
+    "qw1_2": "https://drive.google.com/drive/folders/12CLn8rAEPxckKFVmtov4le3KMXhY0xAb",
+    "qw1_3": "https://drive.google.com/drive/folders/184HLRI-mk0DBKL7R5NeOmSB6aVAjKPRF",
+    "qw1_4": "https://drive.google.com/drive/folders/19WHhOjuMIQnq8xV2AEprbFyWYHChJiqm",
+    "qw1_5": "https://drive.google.com/drive/folders/1h1vPRGgHsla7gkl9yeASMiuR2XwXTC7p",
     "qw1_6": "https://drive.google.com/drive/folders/1iuJbE0UhBq7QGIcAiod6I2mOS8e181r9",
     "qw1_7": "https://drive.google.com/drive/folders/1OjDhQuUbJhOtHaFXXY63sZccmLl_fs_Q",
     "qw1_8": "https://drive.google.com/drive/folders/1FcnVWFZJmzPueHfFCKQitd5RgyXKsH33",
@@ -32,6 +33,101 @@ FOLDER_URLS = {
     "qw7_3": "https://drive.google.com/drive/folders/1RDdRwoFQT_6sM_fuI6lxaHI8HyatKT48",
     "qw7_4": "https://drive.google.com/drive/folders/1VIZ6BCtiGMWIHs7qsT_dr03cUsr3NKJ9",
 }
+
+# ==========================================================
+# DATA GILIRAN 4 SEKOLAH (SMA/SMK/MA) UNTUK QW1.2 POLIDIK
+# ==========================================================
+VARIASI_QW1_2_POLIDIK = [
+    {
+        "sekolah": "SMA NEGERI 1 JATISRONO, Jl. Raya Wonogiri-Ponorogo Km. 26, Watangsono, Jatisrono",
+        "koordinat": "(-7.824890, 111.131250)",
+        "pertimbangan": "Sekolah menengah atas berada di jalur utama sehingga membutuhkan pembinaan kamtibmas dan tertib berlalu lintas",
+        "peserta": "60",
+        "materi": "Pencegahan perkelahian pelajar, perundungan (bullying), dan keselamatan berlalu lintas",
+    },
+    {
+        "sekolah": "SMK PANCASILA 2 JATISRONO, Ngrandu, Gunungsari, Jatisrono",
+        "koordinat": "(-7.831520, 111.128410)",
+        "pertimbangan": "Antisipasi potensi perkelahian pelajar serta pembinaan kedisiplinan siswa SMK di wilayah Jatisrono",
+        "peserta": "55",
+        "materi": "Pembinaan karakter pelajar, pencegahan tawuran antar pelajar, dan larangan penggunaan knalpot brong",
+    },
+    {
+        "sekolah": "SMK PANCASILA 6 JATISRONO, Jl. Garuda Pancasila, Gunungsari, Jatisrono",
+        "koordinat": "(-7.829450, 111.127680)",
+        "pertimbangan": "Jumlah siswa yang banyak sehingga perlu edukasi kesadaran hukum dan pencegahan kenakalan remaja",
+        "peserta": "50",
+        "materi": "Kesadaran hukum kalangan pelajar, pencegahan perkelahian pelajar, dan bijak bermedia sosial",
+    },
+    {
+        "sekolah": "MA AL AMANAH, Sempon, Pandeyan, Jatisrono",
+        "koordinat": "(-7.821840, 111.116920)",
+        "pertimbangan": "Membekali siswa madrasah dengan wawasan kamtibmas serta pencegahan kenakalan remaja di lingkungan sekolah",
+        "peserta": "45",
+        "materi": "Edukasi bahaya kenakalan remaja, perkelahian pelajar, narkoba, dan ketertiban umum",
+    },
+]
+
+VARIASI_QW1_3_POLIRAN = [
+    "Pemerintah Desa dan Pelaku UMKM Kecamatan Jatisrono",
+    "Karang Taruna dan Kelompok Tani Desa Jatisari Jatisrono",
+    "Paguyuban UMKM dan Tokoh Pemuda Desa Gunungsari Jatisrono",
+    "Pemerintah Desa Watangrejo dan Komunitas Wirausaha Muda Jatisrono",
+]
+
+VARIASI_QW1_4_KUMPUL = [
+    {
+        "lokasi": "BALAI DESA JATISRONO",
+        "koordinat": "(-7.826500, 111.125400)",
+        "pertimbangan": "Pusat kegiatan warga untuk menyerap aspirasi dan keluhan kamtibmas secara langsung",
+        "komunitas": "Tokoh Masyarakat dan Warga Desa Jatisrono",
+    },
+    {
+        "lokasi": "BALAI DESA GUNUNGSARI JATISRONO",
+        "koordinat": "(-7.834120, 111.129800)",
+        "pertimbangan": "Mempererat silaturahmi serta menampung saran kamtibmas dari perangkat desa dan warga",
+        "komunitas": "Perangkat Desa dan Paguyuban Warga Gunungsari",
+    },
+    {
+        "lokasi": "BALAI DESA JATISARI JATISRONO",
+        "koordinat": "(-7.821500, 111.122300)",
+        "pertimbangan": "Lokasi strategis pertemuan warga guna menjaga stabilitas keamanan lingkungan desa",
+        "komunitas": "Tokoh Agama, Tokoh Masyarakat, dan Warga Desa Jatisari",
+    },
+    {
+        "lokasi": "KAWASAN PASAR JATISRONO",
+        "koordinat": "(-7.827393, 111.128544)",
+        "pertimbangan": "Titik kumpul aktivitas ekonomi warga yang memerlukan komunikasi aktif terkait pemeliharaan kamtibmas",
+        "komunitas": "Paguyuban Pedagang dan Warga Sekitar Pasar Jatisrono",
+    },
+]
+
+VARIASI_QW1_5_GREEN = [
+    {
+        "lokasi": "LINGKUNGAN MAPOLSEK JATISRONO",
+        "koordinat": "(-7.827400, 111.128500)",
+        "pertimbangan": "Penghijauan dan pemeliharaan kebersihan lingkungan pelayanan publik di Mapolsek Jatisrono",
+        "pihak": "Anggota Polsek Jatisrono dan Warga Masyarakat Sekitar",
+    },
+    {
+        "lokasi": "SEKITAR LAPANGAN JATISRONO",
+        "koordinat": "(-7.826800, 111.127900)",
+        "pertimbangan": "Menjaga kebersihan dan keasrian ruang terbuka publik yang sering digunakan masyarakat Jatisrono",
+        "pihak": "Personel Polsek Jatisrono, Perangkat Desa, dan Warga",
+    },
+    {
+        "lokasi": "SEKITAR TUGU BINTANG JATISRONO",
+        "koordinat": "(-7.827279, 111.128768)",
+        "pertimbangan": "Mewujudkan ruang publik yang bersih, sehat, dan asri di pusat keramaian Kecamatan Jatisrono",
+        "pihak": "Anggota Polsek Jatisrono dan Relawan Kebersihan Warga",
+    },
+    {
+        "lokasi": "LINGKUNGAN DESA JATISRONO",
+        "koordinat": "(-7.826500, 111.125400)",
+        "pertimbangan": "Kerja bakti bersama masyarakat guna menjaga kelestarian lingkungan dan mencegah genangan air",
+        "pihak": "Polsek Jatisrono, Pemerintah Desa, dan Warga Masyarakat",
+    },
+]
 
 def kirim_notif_telegram(pesan, foto_path=None):
     if not TG_TOKEN or not TG_CHAT_ID:
@@ -98,24 +194,20 @@ def tutup_saran_jika_ada(page):
         pass
 
 def buka_tab_dan_kegiatan(page, teks_tab, nama_giat):
-    # Langsung menuju bagian 2. PILIH QUICK WINS DAN KEGIATAN
     seksi_dua = page.get_by_text("2. PILIH QUICK WINS DAN KEGIATAN").first
     if seksi_dua.is_visible():
         seksi_dua.scroll_into_view_if_needed()
 
-    # Klik tab Quick Wins (Ruang Publik Aman / Polres Kuat, Polsek Tangguh)
     tab = page.get_by_text(teks_tab).first
     tab.scroll_into_view_if_needed()
     tab.click()
     page.wait_for_timeout(1500)
 
-    # Klik tombol kegiatan di bagian 2 (menggunakan .last agar melewati kotak pengingat di atas)
     giat = page.get_by_text(nama_giat, exact=True).last
     giat.scroll_into_view_if_needed()
     giat.click()
     page.wait_for_timeout(2500)
 
-    # Pastikan tombol Pelaksana 'Kapolsek' diklik
     try:
         btn_kapolsek = page.get_by_role("button", name="Kapolsek", exact=True).first
         if btn_kapolsek.is_visible():
@@ -124,7 +216,6 @@ def buka_tab_dan_kegiatan(page, teks_tab, nama_giat):
     except Exception:
         pass
 
-    # Isi Nama dan pangkat pejabat pelaksana
     inp_pejabat = page.get_by_label("Nama dan pangkat pejabat pelaksana")
     inp_pejabat.scroll_into_view_if_needed()
     inp_pejabat.fill(NAMA_KAPOLSEK)
@@ -135,10 +226,9 @@ def isi_lokasi_dan_koordinat(page, nama_lokasi, titik_koordinat):
     page.locator("input[placeholder*='Tempel koordinat']").first.fill(titik_koordinat)
     page.wait_for_timeout(500)
 
-def kirim_dan_screenshot(page, kode, nama_giat, link_foto, no_foto, tot_foto):
+def kirim_dan_screenshot(page, kode, nama_giat, link_foto, no_foto, tot_foto, info_tambahan=""):
     tutup_saran_jika_ada(page)
 
-    # Isi semua kolom link Google Drive yang tampil di form
     inputs_drive = page.locator("input[placeholder*='drive.google.com']")
     for i in range(inputs_drive.count()):
         if inputs_drive.nth(i).is_visible():
@@ -152,9 +242,11 @@ def kirim_dan_screenshot(page, kode, nama_giat, link_foto, no_foto, tot_foto):
 
     ss_path = f"bukti_{kode.replace('.', '_')}.png"
     page.screenshot(path=ss_path)
+    teks_tambahan = f"{info_tambahan}\n" if info_tambahan else ""
     kirim_notif_telegram(
         f"✅ Laporan Kapolsek {kode} berhasil dikirim!\n\n"
         f"📌 Kegiatan: {nama_giat}\n"
+        f"{teks_tambahan}"
         f"👮 Pelapor & Pelaksana: {NAMA_KAPOLSEK}\n"
         f"📸 Foto ke-{no_foto} dari {tot_foto}\n"
         f"🔗 Link: {link_foto}",
@@ -165,6 +257,7 @@ def jalankan_robot_kapolsek():
     wib_sekarang = datetime.now(timezone(timedelta(hours=7)))
     hari_ke = wib_sekarang.weekday()  # 0=Senin, 1=Selasa, 2=Rabu, 3=Kamis, 4=Jumat, 5=Sabtu, 6=Minggu
     nama_hari = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu", "Minggu"][hari_ke]
+    indeks_minggu = max(0, (wib_sekarang.date() - TANGGAL_PATOKAN).days) // 7
 
     kirim_notif_telegram(
         f"🤖 Robot Kapolsek Jatisrono mulai berjalan...\n"
@@ -185,7 +278,6 @@ def jalankan_robot_kapolsek():
         page = context.new_page()
 
         try:
-            # Siapkan link foto harian QW7 dan mingguan QW1 sebelum membuka web Posko PBM
             foto_harian = {
                 "qw7_1": ambil_foto_dari_folder(page, "qw7_1", "harian"),
                 "qw7_2": ambil_foto_dari_folder(page, "qw7_2", "harian"),
@@ -208,11 +300,9 @@ def jalankan_robot_kapolsek():
             elif hari_ke == 6:
                 foto_qw1["qw1_8"] = ambil_foto_dari_folder(page, "qw1_8", "mingguan")
 
-            # Buka website Posko PBM
             page.goto("https://poskopbm.polri.go.id/input", timeout=60000, wait_until="domcontentloaded")
             page.wait_for_timeout(3000)
 
-            # Login jika diminta
             if page.locator("input[type='password']").count() > 0:
                 page.locator("input[type='email'], input[type='text']").first.fill(EMAIL)
                 page.locator("input[type='password']").first.fill(PASSWORD)
@@ -227,7 +317,7 @@ def jalankan_robot_kapolsek():
             page.wait_for_timeout(2000)
 
             # ==========================================================
-            # 2. PILIH QUICK WINS DAN KEGIATAN -> LANGSUNG QW1 SESUAI JADWAL
+            # 2. PILIH QUICK WINS DAN KEGIATAN -> LANGSUNG QW1
             # ==========================================================
             # SENIN: QW1.1 & QW1.2
             if hari_ke == 0:
@@ -240,44 +330,66 @@ def jalankan_robot_kapolsek():
                 link, no, tot = foto_qw1["qw1_1"]
                 kirim_dan_screenshot(page, "QW1.1", "Gatur pagi (pengaturan lalu lintas Senin pagi)", link, no, tot)
 
-                # QW1.2 Polisi peduli pendidikan (Polidik)
+                # QW1.2 Polisi peduli pendidikan (Polidik) - Digilir Berurutan 4 Sekolah SMA/SMK/MA
+                paket_polidik = VARIASI_QW1_2_POLIDIK[indeks_minggu % len(VARIASI_QW1_2_POLIDIK)]
                 buka_tab_dan_kegiatan(page, "Ruang Publik Aman", "Polisi peduli pendidikan (Polidik)")
-                isi_lokasi_dan_koordinat(page, "SMP NEGERI 1 JATISRONO", "(-7.828105, 111.127891)")
-                page.get_by_label("Pertimbangan pilihan lokasi").fill("Sekolah berada di jalur utama dan membutuhkan pembinaan kamtibmas pelajar")
+                isi_lokasi_dan_koordinat(page, paket_polidik["sekolah"], paket_polidik["koordinat"])
+                page.locator("textarea[placeholder*='Alasan lokasi dipilih']").first.fill(paket_polidik["pertimbangan"])
                 page.get_by_role("button", name="Penyuluhan", exact=True).click()
-                page.locator("input[type='number']").first.fill("50")
-                page.get_by_label("Materi").fill("Pencegahan perkelahian pelajar dan tertib berlalu lintas")
+                page.locator("input[type='number']").first.fill(paket_polidik["peserta"])
+                try:
+                    page.locator("textarea[placeholder*='Tema pekan ini']").first.fill(paket_polidik["materi"])
+                except Exception:
+                    pass
                 link, no, tot = foto_qw1["qw1_2"]
-                kirim_dan_screenshot(page, "QW1.2", "Polisi peduli pendidikan (Polidik)", link, no, tot)
+                kirim_dan_screenshot(
+                    page, "QW1.2", "Polisi peduli pendidikan (Polidik)", link, no, tot,
+                    f"🏫 Sekolah: {paket_polidik['sekolah']}\n📍 Koordinat: {paket_polidik['koordinat']}"
+                )
 
-            # RABU: QW1.4 Kumpul bersama masyarakat
+            # RABU: QW1.4 Kumpul bersama masyarakat - Digilir Berurutan
             elif hari_ke == 2:
+                paket_kumpul = VARIASI_QW1_4_KUMPUL[indeks_minggu % len(VARIASI_QW1_4_KUMPUL)]
                 buka_tab_dan_kegiatan(page, "Ruang Publik Aman", "Kumpul bersama masyarakat")
-                isi_lokasi_dan_koordinat(page, "BALAI DESA JATISRONO", "(-7.826500, 111.125400)")
-                page.get_by_label("Pertimbangan pilihan lokasi").fill("Pusat kegiatan warga untuk menyerap aspirasi dan keluhan kamtibmas")
-                page.get_by_label("Komunitas atau paguyuban yang ditemui").fill("Tokoh Masyarakat dan Warga Desa Jatisrono")
+                isi_lokasi_dan_koordinat(page, paket_kumpul["lokasi"], paket_kumpul["koordinat"])
+                page.locator("textarea[placeholder*='Alasan lokasi dipilih']").first.fill(paket_kumpul["pertimbangan"])
+                try:
+                    page.get_by_label("Komunitas atau paguyuban yang ditemui").fill(paket_kumpul["komunitas"])
+                except Exception:
+                    page.locator("xpath=//*[contains(text(), 'Komunitas atau paguyuban')]/following::input[1]").fill(paket_kumpul["komunitas"])
                 link, no, tot = foto_qw1["qw1_4"]
-                kirim_dan_screenshot(page, "QW1.4", "Kumpul bersama masyarakat", link, no, tot)
+                kirim_dan_screenshot(
+                    page, "QW1.4", "Kumpul bersama masyarakat", link, no, tot,
+                    f"📍 Lokasi: {paket_kumpul['lokasi']}\n👥 Komunitas: {paket_kumpul['komunitas']}"
+                )
 
-            # KAMIS: QW1.3 Polisi peduli pengangguran (Poliran)
+            # KAMIS: QW1.3 Polisi peduli pengangguran (Poliran) - Digilir Berurutan
             elif hari_ke == 3:
+                mitra_pilihan = VARIASI_QW1_3_POLIRAN[indeks_minggu % len(VARIASI_QW1_3_POLIRAN)]
                 buka_tab_dan_kegiatan(page, "Ruang Publik Aman", "Polisi peduli pengangguran (Poliran)")
                 page.get_by_role("button", name="Merekrut (pemetaan dan pendataan warga usia produktif)").click()
-                page.get_by_label("Jalin kemitraan").select_option(label="Rapat dengan mitra")
-                page.get_by_label("Pihak kerja sama").fill("Pemerintah Desa dan UMKM Kecamatan Jatisrono")
+                page.locator("select").nth(1).select_option(label="Rapat dengan mitra")
+                page.locator("input[placeholder*='Nama mitra']").first.fill(mitra_pilihan)
                 link, no, tot = foto_qw1["qw1_3"]
-                kirim_dan_screenshot(page, "QW1.3", "Polisi peduli pengangguran (Poliran)", link, no, tot)
+                kirim_dan_screenshot(
+                    page, "QW1.3", "Polisi peduli pengangguran (Poliran)", link, no, tot,
+                    f"🤝 Mitra: {mitra_pilihan}"
+                )
 
             # JUMAT: QW1.5 & QW1.6
             elif hari_ke == 4:
-                # QW1.5 Green policing
+                # QW1.5 Green policing - Digilir Berurutan
+                paket_green = VARIASI_QW1_5_GREEN[indeks_minggu % len(VARIASI_QW1_5_GREEN)]
                 buka_tab_dan_kegiatan(page, "Ruang Publik Aman", "Green policing")
-                isi_lokasi_dan_koordinat(page, "LINGKUNGAN MAPOLSEK JATISRONO", "(-7.827400, 111.128500)")
-                page.get_by_label("Pertimbangan pilihan lokasi").fill("Penghijauan dan pemeliharaan lingkungan asri di wilayah Polsek Jatisrono")
+                isi_lokasi_dan_koordinat(page, paket_green["lokasi"], paket_green["koordinat"])
+                page.locator("textarea[placeholder*='Alasan lokasi dipilih']").first.fill(paket_green["pertimbangan"])
                 page.get_by_role("button", name="Kerja bakti kebersihan", exact=True).click()
-                page.get_by_label("Pihak yang terlibat").fill("Anggota Polsek Jatisrono dan Warga Masyarakat")
+                page.locator("input[placeholder*='Warga, Pemda']").first.fill(paket_green["pihak"])
                 link, no, tot = foto_qw1["qw1_5"]
-                kirim_dan_screenshot(page, "QW1.5", "Green policing", link, no, tot)
+                kirim_dan_screenshot(
+                    page, "QW1.5", "Green policing", link, no, tot,
+                    f"🌱 Lokasi: {paket_green['lokasi']} {paket_green['koordinat']}"
+                )
 
                 # QW1.6 Jumat keliling (Jumling)
                 buka_tab_dan_kegiatan(page, "Ruang Publik Aman", "Jumat keliling (Jumling)")
